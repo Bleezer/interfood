@@ -31,7 +31,7 @@ def valid_number(value):
 
 
 def recommend(menu, profile):
-    """Naponta egy ajánlat vagy jelzett hiány; a bemeneteket nem módosítja."""
+    """Fő ajánlat és legfeljebb két eltérő alternatíva naponta, módosítás nélkül."""
     if not isinstance(profile, dict):
         raise ValueError("Hibás személyes profil.")
     for key in ("min_protein_g", "max_fat_g", "min_protein_fat_ratio", "preferred_protein_fat_ratio"):
@@ -98,14 +98,26 @@ def recommend(menu, profile):
                      len(warnings), rank, not ideal, fat, -protein, str(meal["id"]))
             candidates.append((score, meal, warnings, ideal))
         if candidates:
-            _, selected, warnings, ideal = min(candidates, key=lambda candidate: candidate[0])
-            reason = "Szombati, megengedőbb választás." if relaxed else "Megfelel a hétköznapi tápértékhatároknak."
-            if ideal:
-                reason += f" A fehérje/zsír arány legalább {profile['preferred_protein_fat_ratio']:g}:1."
-            results.append({"date": day.isoformat(), "meal": selected, "relaxed": relaxed,
-                            "reason": reason, "warnings": warnings})
+            options = []
+            seen_dishes = set()
+            for _, selected, warnings, ideal in sorted(candidates, key=lambda candidate: candidate[0]):
+                # A kis adag és a más körettel kínált azonos fogás nem új alternatíva.
+                dish = next((text(part["name"]) for part in selected.get("components", [])
+                             if part.get("name")), text(selected["name"]))
+                dish = dish.split(",")[0].strip()
+                if dish in seen_dishes:
+                    continue
+                seen_dishes.add(dish)
+                reason = "Szombati, megengedőbb választás." if relaxed else "Megfelel a hétköznapi tápértékhatároknak."
+                if ideal:
+                    reason += f" A fehérje/zsír arány legalább {profile['preferred_protein_fat_ratio']:g}:1."
+                options.append({"meal": selected, "reason": reason, "warnings": warnings})
+                if len(options) == 3:
+                    break
+            results.append({"date": day.isoformat(), "relaxed": relaxed,
+                            **options[0], "alternatives": options[1:]})
         else:
             results.append({"date": day.isoformat(), "meal": None, "relaxed": relaxed,
                             "reason": "Nincs a szabályoknak megfelelő, ismert tápértékű ebéd.",
-                            "warnings": []})
+                            "warnings": [], "alternatives": []})
     return results

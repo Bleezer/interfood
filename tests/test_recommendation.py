@@ -136,3 +136,62 @@ class RecommendationTests(unittest.TestCase):
         self.assertIn("50", result["warnings"][0])
         self.assertIn("25", result["warnings"][1])
         self.assertIn("3", result["warnings"][2])
+
+    def test_two_alternatives_keep_primary_and_skip_repeated_dishes(self):
+        first = meal(1, name="Roston csirkemell, zöldség", fat=10)
+        same = meal(2, name="Roston csirkemell, rizs", fat=11)
+        second = meal(3, name="Tavaszi csirkemell rizottó", fat=15)
+        third = meal(4, name="Székelykáposzta csirkemellből", fat=16)
+        fourth = meal(5, name="Fitt parajfőzelék, csirkefalatok", fat=17)
+        source = [first, same, second, third, fourth]
+        result = self.choose(*source)[0]
+        self.assertEqual(result["meal"]["id"], 1)
+        self.assertEqual([option["meal"]["id"] for option in result["alternatives"]], [3, 4])
+        self.assertEqual(result, self.choose(*reversed(source))[0])
+
+    def test_alternatives_obey_exclusions_and_numeric_limits(self):
+        first = meal(1, name="Rizottó")
+        second = meal(2, name="Székelykáposzta", fat=19)
+        forbidden = meal(3, name="Lazac", fat=10)
+        fatty = meal(4, name="Sült karaj", fat=35)
+        result = self.choose(first, second, forbidden, fatty)[0]
+        options = [result] + result["alternatives"]
+        self.assertEqual({option["meal"]["id"] for option in options}, {1, 2})
+        self.assertTrue(all(option["reason"] for option in options))
+
+    def test_no_fabricated_alternatives(self):
+        self.assertEqual(self.choose(meal())[0]["alternatives"], [])
+        self.assertEqual(self.choose(meal(protein=10))[0]["alternatives"], [])
+
+    def test_saturday_alternative_has_its_own_warnings(self):
+        full = meal(1, day="2026-11-14", name="Rántott karaj", protein=60, fat=20)
+        low = meal(2, day="2026-11-14", name="Rántott pulykamell", protein=35, fat=45)
+        result = self.choose(full, low)[0]
+        self.assertEqual(result["warnings"], [])
+        self.assertEqual(len(result["alternatives"][0]["warnings"]), 3)
+
+    def test_cli_prints_both_alternatives_and_their_nutrition(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "menu.json"
+            source = menu(meal(1, name="Rizottó", fat=10),
+                          meal(2, name="Székelykáposzta", fat=15),
+                          meal(3, name="Parajfőzelék", fat=19))
+            path.write_text(json.dumps(source, ensure_ascii=False), encoding="utf-8")
+            run = subprocess.run([sys.executable, "-X", "utf8", "-m", "recommendation", "--menu", str(path)],
+                                 cwd=ROOT, capture_output=True, text=True, encoding="utf-8")
+            self.assertEqual(run.returncode, 0, run.stderr)
+            self.assertIn("Alternatíva 1", run.stdout)
+            self.assertIn("Alternatíva 2", run.stdout)
+            self.assertIn("Székelykáposzta", run.stdout)
+            self.assertIn("Parajfőzelék", run.stdout)
+            self.assertEqual(run.stdout.count("Fehérje:"), 3)
+
+    def test_bundled_component_and_missing_components_share_dish_identity(self):
+        first = meal(1, name="Roston csirkemell, brokkoli", fat=10)
+        first["components"] = [{"name": "Roston csirkemell, brokkoli"}]
+        same = meal(2, name="Roston csirkemell, rizs", fat=11)
+        same["components"] = [{"name": "Roston csirkemell"}]
+        fallback = meal(3, name="Roston csirkemell, burgonya", fat=12)
+        different = meal(4, name="Rizottó", fat=15)
+        result = self.choose(first, same, fallback, different)[0]
+        self.assertEqual([option["meal"]["id"] for option in result["alternatives"]], [4])

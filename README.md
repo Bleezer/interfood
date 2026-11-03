@@ -98,7 +98,10 @@ indít gyűjtést vagy böngészőt. Futtatás:
 Másik mentett fájllal: `--menu útvonal`; másik profillal: `--profile útvonal`.
 A személyes szabályok a `recommendation/profile.json` fájlban vannak.
 
-Hétfőtől szombatig, csak a kínált napokra ajánl egy ebédet.
+Hétfőtől szombatig, csak a kínált napokra ad egy fő ajánlatot és legfeljebb
+két alternatívát, mindegyikhez tápértékkel és indoklással. Azonos fogást más
+körettel vagy kis adagban nem ismétel alternatívaként. Ha nincs elég megfelelő,
+különböző fogás, kevesebb lehetőséget mutat; a határokat ezért nem lazítja.
 Hétköznap legalább 40 g fehérje, 30 g alatti zsír és legalább 2:1
 fehérje/zsír arány szükséges; 3:1 előnyt élvez. A sorok sorrendje:
 Fitnessz, Karcsúsító, Sport, majd más főételek. Ár és kalória nem szempont.

@@ -27,12 +27,15 @@ def main():
         if meal is None:
             print(f"{result['date']}: {result['reason']}")
             continue
-        nutrition = meal["nutrition_per_portion"]
-        print(f"{result['date']}: [{meal['code']}] {meal['name']} ({meal['category']})")
-        print(f"  Fehérje: {nutrition['protein_g']:g} g; zsír: {nutrition['fat_g']:g} g.")
-        print(f"  {result['reason']}")
-        for warning in result["warnings"]:
-            print(f"  Eltérés: {warning}")
+        for index, option in enumerate([result] + result["alternatives"]):
+            meal = option["meal"]
+            label = "Fő ajánlat" if index == 0 else f"Alternatíva {index}"
+            nutrition = meal["nutrition_per_portion"]
+            print(f"{result['date']} – {label}: [{meal['code']}] {meal['name']} ({meal['category']})")
+            print(f"  Fehérje: {nutrition['protein_g']:g} g; zsír: {nutrition['fat_g']:g} g.")
+            print(f"  {option['reason']}")
+            for warning in option["warnings"]:
+                print(f"  Eltérés: {warning}")
     if not results:
         print("Nincs kínált hétfő–szombati nap az étlapban.")
 
