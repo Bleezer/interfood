@@ -112,3 +112,18 @@ Hal, tengeri étel és gyümölcsös hús minden nap kizárt. A felismerés az
 ételnév és a HTML-ből kiolvasott összetevők szövegén alapul, nem AI-agent.
 Nem teljes körű szemantikai felismerés: az ajánlást az összetevőkkel együtt
 érdemes ellenőrizni. Nincs automatikus rendelés vagy kosármódosítás.
+
+## Felhős futtatás és telefonos értesítés
+
+A `.github/workflows/weekly-menu.yml` GitHub Actionsban futtatja a gyűjtést
+és a meglévő szabályalapú válogatót, majd Telegramra küldi a heti ajánlót.
+A gépednek nem kell bekapcsolva lennie. Alapérték: péntek 10:00 Budapest.
+Kézi futtatás és külön tesztértesítés is indítható.
+
+Bekötés és első telefonos próba: [docs/cloud-setup.md](docs/cloud-setup.md).
+Szükséges két GitHub Secret: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
+Ezeket ne commitold. Helyi előnézet értesítés nélkül:
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 -m delivery --dry-run
+```

@@ -32,7 +32,7 @@ A projekt gyökeréből, PowerShellben:
 
 ```powershell
 .\.venv\Scripts\python.exe -X utf8 -m unittest -v
-.\.venv\Scripts\python.exe -m compileall -q interfood recommendation tests collect_menu.py
+.\.venv\Scripts\python.exe -m compileall -q interfood recommendation delivery tests collect_menu.py
 ```
 
 Gyűjtés: `.\.venv\Scripts\python.exe -X utf8 -m interfood`.
@@ -46,3 +46,10 @@ Superpowers tervek: `docs/superpowers/plans/`; specifikációk: `docs/superpower
 - `recommendation/profile.json`: személyes tápértékhatárok és sorpreferenciák.
 - A gyűjtő a `data/menu.json` és `data/raw.json` fájlokat cseréli; a régi dátumos adatokat rendezéskor megőrizzük.
 - Kínálat nélküli napra és vasárnapra nincs ajánlás; szombaton csak a tápértékhatárok lazulnak.
+
+## Kézbesítés
+
+- `delivery/`: Telegram-kézbesítés; nem jelentkezik be az Interfood oldalára és nem rendel.
+- `recommendation/report.py`: a CLI és a Telegram közös szöveges riportja.
+- Token és chat-azonosító kizárólag Actions Secrets-be kerülhet, kódba vagy naplóba nem.
+- Az offline tesztek a HTTP-hívásokat helyettesítik; valódi értesítést nem küldhetnek.

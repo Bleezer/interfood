@@ -1,0 +1,71 @@
+name: Weekly Interfood recommendations
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_notification:
+        description: Send only a short test notification, without collecting a menu
+        type: boolean
+        default: false
+  schedule:
+    - cron: '0 10 * * 5'
+      timezone: Europe/Budapest
+
+permissions:
+  contents: read
+
+concurrency:
+  group: interfood-weekly
+  cancel-in-progress: false
+
+jobs:
+  collect-and-notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Check notification configuration
+        id: config
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [[ -z "$TELEGRAM_BOT_TOKEN" || -z "$TELEGRAM_CHAT_ID" ]]; then
+            echo "::error::Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in repository Actions secrets."
+            exit 1
+          fi
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Offline tests
+        run: python -m unittest -v
+      - name: Install Chromium
+        if: ${{ inputs.test_notification != true }}
+        run: python -m playwright install --with-deps chromium
+      - name: Collect next week
+        if: ${{ inputs.test_notification != true }}
+        run: python -m interfood
+      - name: Send weekly recommendations
+        if: ${{ inputs.test_notification != true }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m delivery
+      - name: Send test notification
+        if: ${{ inputs.test_notification == true }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m delivery --test
+      - name: Notify about a failed run
+        if: ${{ failure() && steps.config.outcome == 'success' }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m delivery --failure

@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from .selection import recommend
+from .report import format_report
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -20,24 +21,7 @@ def main():
         results = recommend(menu, profile)
     except (OSError, ValueError, KeyError, TypeError) as error:
         parser.exit(1, f"Nem sikerült a válogatás: {error}\n")
-    print(f"Ebédajánlatok: {menu['week_start']} – {menu['week_end']}")
-    print("Név és összetevők alapján, helyi szabályokkal; az összetevőket ellenőrizd.")
-    for result in results:
-        meal = result["meal"]
-        if meal is None:
-            print(f"{result['date']}: {result['reason']}")
-            continue
-        for index, option in enumerate([result] + result["alternatives"]):
-            meal = option["meal"]
-            label = "Fő ajánlat" if index == 0 else f"Alternatíva {index}"
-            nutrition = meal["nutrition_per_portion"]
-            print(f"{result['date']} – {label}: [{meal['code']}] {meal['name']} ({meal['category']})")
-            print(f"  Fehérje: {nutrition['protein_g']:g} g; zsír: {nutrition['fat_g']:g} g.")
-            print(f"  {option['reason']}")
-            for warning in option["warnings"]:
-                print(f"  Eltérés: {warning}")
-    if not results:
-        print("Nincs kínált hétfő–szombati nap az étlapban.")
+    print(format_report(menu, results), end="")
 
 
 if __name__ == "__main__":
