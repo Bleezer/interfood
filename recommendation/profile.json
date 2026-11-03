@@ -1,0 +1,13 @@
+{
+  "name": "Saját ebéd",
+  "min_protein_g": 40,
+  "max_fat_g": 30,
+  "min_protein_fat_ratio": 2,
+  "preferred_protein_fat_ratio": 3,
+  "preferred_categories": [
+    "fitness",
+    "karcsusito",
+    "sport"
+  ],
+  "saturday_relaxed": true
+}

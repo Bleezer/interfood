@@ -31,8 +31,8 @@ def main():
         "meals": meals,
     }
     # Ellenőrzés után mentünk; hiba esetén a korábbi heti fájl megmarad.
-    save_json(OUTPUT / "raw" / f"{monday}.json", raw)
-    target = OUTPUT / f"menu-{monday}.json"
+    save_json(OUTPUT / "raw.json", raw)
+    target = OUTPUT / "menu.json"
     save_json(target, result)
     print(f"Mentve: {target}")
     for day, count in sorted(Counter(meal["date"] for meal in meals).items()):

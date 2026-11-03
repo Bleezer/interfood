@@ -2,7 +2,7 @@
 
 import re
 import time
-from datetime import date
+from datetime import date, timedelta
 
 from playwright.sync_api import sync_playwright
 
@@ -58,7 +58,11 @@ def fetch_menu(monday):
                 payload = wait_for_data(API + "menu")
             # Keskeny nézetben a dátum vizuálisan rejtett lehet, de a DOM-ban megmarad.
             tabs = page.locator('[role="tab"]')
-            tabs.filter(has_text=monday.strftime("%Y.%m.%d.")).wait_for(state="attached")
+            week_dates = re.compile("|".join(
+                re.escape((monday + timedelta(days=offset)).strftime("%Y.%m.%d."))
+                for offset in range(7)
+            ))
+            tabs.filter(has_text=week_dates).first.wait_for(state="attached")
             tab_dates = {
                 date.fromisoformat(match.replace(".", "-")).isoformat()
                 for text in tabs.all_text_contents()

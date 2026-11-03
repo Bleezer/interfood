@@ -37,6 +37,7 @@ interfood/
     dates.py             # Következő hétfő számítása
     normalization.py     # Étlapellenőrzés és tápérték-feldolgozás
     storage.py           # Atomikus JSON-mentés
+recommendation/          # Offline személyes ebédválogatás
 tests/                   # Offline unittest tesztek
 data/                    # Feldolgozott és nyers heti adatok
 inspection/              # Helyi vizsgálati adatok (Gitből kizárva)
@@ -48,8 +49,11 @@ requirements.txt         # Rögzített függőségek
 
 ## Eredmény
 
-- `data/menu-YYYY-MM-DD.json`: feldolgozott heti étlap, a hétfő dátumával.
-- `data/raw/YYYY-MM-DD.json`: eredeti étlapválasz, későbbi ellenőrzéshez.
+A legutóbbi sikeres gyűjtés fájljai; minden sikeres futás lecseréli őket.
+A korábbi dátumos helyi fájlokat az átállás nem törli.
+
+- `data/menu.json`: feldolgozott heti étlap, a hétfő dátumával.
+- `data/raw.json`: eredeti étlapválasz, későbbi ellenőrzéshez.
 
 A `meals` lista egy eleme egy dátumhoz és ételkódhoz tartozó ajánlat.
 A kis adagok külön tételek, a levesek, desszertek és pékáruk is megmaradnak.
@@ -81,5 +85,27 @@ Ha a következő hét még nem elérhető, üres vagy hibás, a program hibával
 
 A tesztek hálózat és böngészőindítás nélkül futnak.
 
-Az időzített felhős futás, a távoli tartós tárolás és a családtagonkénti
-ajánlás még nincs bekötve. A helyi JSON ezek közös bemenete lesz.
+
+## Személyes ebédválogatás
+
+A `recommendation/` külön programrész: a mentett étlapot olvassa, nem
+indít gyűjtést vagy böngészőt. Futtatás:
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 -m recommendation
+```
+
+Másik mentett fájllal: `--menu útvonal`; másik profillal: `--profile útvonal`.
+A személyes szabályok a `recommendation/profile.json` fájlban vannak.
+
+Hétfőtől szombatig, csak a kínált napokra ajánl egy ebédet.
+Hétköznap legalább 40 g fehérje, 30 g alatti zsír és legalább 2:1
+fehérje/zsír arány szükséges; 3:1 előnyt élvez. A sorok sorrendje:
+Fitnessz, Karcsúsító, Sport, majd más főételek. Ár és kalória nem szempont.
+Szombaton a rántott hús elsőbbséget kap, a számszerű határok megengedőbbek;
+az eltéréseket kiírja. Hiányos tápértékű ételt nem ajánl.
+
+Hal, tengeri étel és gyümölcsös hús minden nap kizárt. A felismerés az
+ételnév és a HTML-ből kiolvasott összetevők szövegén alapul, nem AI-agent.
+Nem teljes körű szemantikai felismerés: az ajánlást az összetevőkkel együtt
+érdemes ellenőrizni. Nincs automatikus rendelés vagy kosármódosítás.

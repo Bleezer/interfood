@@ -32,10 +32,17 @@ A projekt gyökeréből, PowerShellben:
 
 ```powershell
 .\.venv\Scripts\python.exe -X utf8 -m unittest -v
-.\.venv\Scripts\python.exe -m compileall -q interfood tests collect_menu.py
+.\.venv\Scripts\python.exe -m compileall -q interfood recommendation tests collect_menu.py
 ```
 
 Gyűjtés: `.\.venv\Scripts\python.exe -X utf8 -m interfood`.
 A korábbi `collect_menu.py` belépési pont is maradjon működőképes.
 Új függőséget csak indokolt esetben adj hozzá; a verziók a `requirements.txt` fájlban vannak.
 Superpowers tervek: `docs/superpowers/plans/`; specifikációk: `docs/superpowers/specs/`.
+
+## Ebédválogatás
+
+- `recommendation/`: offline válogatás a `data/menu.json` fájlból; nem importál gyűjtőt vagy Playwrightot.
+- `recommendation/profile.json`: személyes tápértékhatárok és sorpreferenciák.
+- A gyűjtő a `data/menu.json` és `data/raw.json` fájlokat cseréli; a régi dátumos adatokat rendezéskor megőrizzük.
+- Kínálat nélküli napra és vasárnapra nincs ajánlás; szombaton csak a tápértékhatárok lazulnak.
