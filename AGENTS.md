@@ -13,7 +13,7 @@ A feldolgozott adat későbbi, több családtag számára készülő ajánlások
 - `interfood/storage.py`: atomikus UTF-8 JSON-mentés.
 - `interfood/cli.py`: a futás összehangolása; `__main__.py`: modulbelépés.
 - `collect_menu.py`: a korábbi parancs és publikus nevek kompatibilitása.
-- `tests/`: offline tesztek; `scripts/`: kézi próbák.
+- `tests/`: offline tesztek.
 
 ## Működési korlátok
 
@@ -32,7 +32,7 @@ A projekt gyökeréből, PowerShellben:
 
 ```powershell
 .\.venv\Scripts\python.exe -X utf8 -m unittest -v
-.\.venv\Scripts\python.exe -m compileall -q interfood tests scripts collect_menu.py
+.\.venv\Scripts\python.exe -m compileall -q interfood tests collect_menu.py
 ```
 
 Gyűjtés: `.\.venv\Scripts\python.exe -X utf8 -m interfood`.

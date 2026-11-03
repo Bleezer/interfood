@@ -38,7 +38,6 @@ interfood/
     normalization.py     # Étlapellenőrzés és tápérték-feldolgozás
     storage.py           # Atomikus JSON-mentés
 tests/                   # Offline unittest tesztek
-scripts/try_interfood.py # Kézi böngészőpróba
 data/                    # Feldolgozott és nyers heti adatok
 inspection/              # Helyi vizsgálati adatok (Gitből kizárva)
 docs/superpowers/        # Specifikációk és végrehajtási tervek
@@ -80,12 +79,7 @@ Ha a következő hét még nem elérhető, üres vagy hibás, a program hibával
 .\.venv\Scripts\python.exe -m unittest -v
 ```
 
-A tesztek hálózat és böngészőindítás nélkül futnak. A kézi böngészőpróba
-külön indítható, látható Chromium-ablakkal:
-
-```powershell
-.\.venv\Scripts\python.exe -X utf8 scripts/try_interfood.py
-```
+A tesztek hálózat és böngészőindítás nélkül futnak.
 
 Az időzített felhős futás, a távoli tartós tárolás és a családtagonkénti
 ajánlás még nincs bekötve. A helyi JSON ezek közös bemenete lesz.
