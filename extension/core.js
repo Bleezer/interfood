@@ -15,9 +15,10 @@
     sunday.setUTCDate(sunday.getUTCDate() + 6);
     return {start: monday.toISOString().slice(0, 10), end: sunday.toISOString().slice(0, 10), week, year};
   }
-  function validatePlan(plan, expected = nextWeek()) {
+  function validatePlan(plan, expected = nextWeek(), profile = null) {
     if (!plan || plan.version !== 1 || plan.week_start !== expected.start ||
         !Array.isArray(plan.items) || plan.items.length > 18) throw Error("Hibás vagy régi heti kosárterv.");
+    if (profile !== null && plan.profile_id !== profile) throw Error("Wrong profile in cart plan.");
     const ids = new Set();
     for (const item of plan.items) {
       if (!item || !Number.isSafeInteger(item.id) || item.id <= 0 || ids.has(item.id) ||
@@ -29,9 +30,10 @@
     }
     return plan;
   }
-  function ledgerKey(account, week) {
+  function ledgerKey(account, week, profile = null) {
     if (!/^[0-9]+$/.test(String(account)) || !/^\d{4}-\d{2}-\d{2}$/.test(week)) throw Error("Hibás fiók vagy hét.");
-    return "cart-ledger:" + account + ":" + week;
+    if (profile !== null && (typeof profile !== "string" || !/^[a-z][a-z0-9_-]{0,31}$/.test(profile))) throw Error("Invalid profile.");
+    return "cart-ledger:" + account + ":" + week + (profile === null ? "" : ":" + profile);
   }
   function claim(ledger, id, tabId) {
     if (Object.hasOwn(ledger, id)) return false;

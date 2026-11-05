@@ -130,11 +130,15 @@ Ezeket ne commitold. Helyi előnézet értesítés nélkül:
 
 ## Chrome kosársegéd
 
-Az `extension/` Chrome-bővítmény bejelentkezés után a következő hét napi fő
-ajánlatát és két alternatíváját egy-egy adaggal a kosárba teszi.
-A `cart_assistant/` helyi Python-host az oldalon betöltött étlapból számít
-tervet a meglévő szabályokkal; hitelesítési adatot nem kap.
-A kosárban már szereplő ételt nem növeli, a kézzel kivett ételt nem teszi vissza.
+A sarokban személyválasztó és **Kosárba teszem** gomb van.
+Belépéskor nincs automatikus feltöltés. Egy személy egy hétre egyszer tölthet;
+a korábban betett, majd kivett ételek nem kerülnek vissza.
+Közös Interfood-fióknál másik személy ugyanabból az ételből saját adagot kap.
 
-A rendelést a felhasználó véglegesíti. Telepítés:
+Profilok: `recommendation/profiles.json`. Jelenleg csak a saját profil konfigurált;
+a feleség és a fiú helye előkészítve, preferenciák nélkül inaktív.
+CLI: `python -m recommendation --person self`; a `--profile` is megmarad.
+A Telegram-ajánló továbbra is a saját profillal fut.
+
+Frissítés, használat és telepítés:
 [docs/chrome-cart-setup.md](docs/chrome-cart-setup.md).

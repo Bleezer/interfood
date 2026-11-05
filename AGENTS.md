@@ -56,8 +56,8 @@ Superpowers tervek: `docs/superpowers/plans/`; specifikációk: `docs/superpower
 
 ## Chrome kosársegéd
 
-A felhasználó külön engedélyezte, hogy bejelentkezés után a napi fő ajánlat
-és két alternatíva mindegyikéből egy adag a kosárba kerüljön.
+A felhasználó külön engedélyezte, hogy kézi gombnyomásra, kiválasztott
+személyenként a napi fő ajánlat és két alternatíva egy-egy adagja a kosárba kerüljön.
 
 - `extension/`: kizárólag a Chrome-ban megnyitott Interfood-oldal saját kosárhoz adó gombjait használja.
 - `cart_assistant/`: a nyilvános étlapséma alapján számít tervet; nem jelentkezik be és nem küld kosárkérést.
@@ -67,3 +67,10 @@ A felhasználó külön engedélyezte, hogy bejelentkezés után a napi fő ajá
 - A tartós pending/done/uncertain állapotokat fiók/hét/étel szerint őrizzük meg.
 - Jelszó, token és teljes személyes profil nem kerülhet a bővítmény üzeneteibe vagy naplóiba.
 - A DOM-próba minden hálózati URL-t helyi HTML-re cserél; valódi kosárkérést nem küldhet.
+
+## Kézi családi kosárfeltöltés
+
+- A feltöltés kizárólag a sarokban lévő gombbal indul; belépés és profilváltás nem indítja.
+- A recommendation/profiles.json listázza a self/wife/son profilokat; hiányzó preferenciával nincs indítás.
+- Fiók/hét/személy szerint egyszer indulhat feltöltés; a korábbi automatikus kosár a saját profilé.
+- Közös fogásnál minden további családtag egy új adagot kap; a korábban kivett adagokat nem állítjuk vissza.

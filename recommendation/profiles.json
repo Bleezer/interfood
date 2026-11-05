@@ -1,0 +1,20 @@
+{
+  "default_profile_id": "self",
+  "profiles": [
+    {
+      "id": "self",
+      "name": "Én",
+      "file": "profile.json"
+    },
+    {
+      "id": "wife",
+      "name": "Feleségem",
+      "file": null
+    },
+    {
+      "id": "son",
+      "name": "Fiam",
+      "file": null
+    }
+  ]
+}

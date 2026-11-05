@@ -37,6 +37,9 @@ def recommend(menu, profile):
     for key in ("min_protein_g", "max_fat_g", "min_protein_fat_ratio", "preferred_protein_fat_ratio"):
         if not valid_number(profile.get(key)):
             raise ValueError(f"Hibás profilérték: {key}")
+    for key in ("exclude_seafood", "exclude_fruity_meat", "prefer_breaded_saturday"):
+        if not isinstance(profile.get(key, True), bool):
+            raise ValueError(f"Invalid boolean preference: {key}")
     preferred = profile.get("preferred_categories")
     if not isinstance(preferred, list) or not all(isinstance(v, str) and v.strip() for v in preferred):
         raise ValueError("A sorpreferenciák szöveges listát igényelnek.")
@@ -71,9 +74,9 @@ def recommend(menu, profile):
             description = " ".join((name, ingredients, components))
             if meal.get("order_disabled") or NOT_LUNCH.search(category + " " + group):
                 continue
-            if SEAFOOD.search(description):
+            if profile.get("exclude_seafood", True) and SEAFOOD.search(description):
                 continue
-            if MEAT.search(description) and (FRUIT.search(name + " " + components) or FRUIT.search(ingredients)):
+            if profile.get("exclude_fruity_meat", True) and MEAT.search(description) and (FRUIT.search(name + " " + components) or FRUIT.search(ingredients)):
                 continue
             nutrition = meal.get("nutrition_per_portion") or {}
             protein, fat = nutrition.get("protein_g"), nutrition.get("fat_g")
@@ -93,7 +96,7 @@ def recommend(menu, profile):
             ideal = protein >= profile["preferred_protein_fat_ratio"] * fat
             fried_meat = bool(re.search(r"rantott|bunda|paniroz", name + " " + category)) and bool(MEAT.search(name))
             # Szombaton rántott hús; utána a sor, az ideális arány és a kisebb zsír.
-            score = (0 if relaxed and fried_meat else 1,
+            score = (0 if relaxed and fried_meat and profile.get("prefer_breaded_saturday", True) else 1,
                      protein < profile["min_protein_g"] if relaxed else False,
                      len(warnings), rank, not ideal, fat, -protein, str(meal["id"]))
             candidates.append((score, meal, warnings, ideal))

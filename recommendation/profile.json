@@ -9,5 +9,8 @@
     "karcsusito",
     "sport"
   ],
-  "saturday_relaxed": true
+  "saturday_relaxed": true,
+  "exclude_seafood": true,
+  "exclude_fruity_meat": true,
+  "prefer_breaded_saturday": true
 }

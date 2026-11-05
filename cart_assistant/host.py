@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 from interfood.dates import next_monday
 from interfood.normalization import normalize_menu
 from recommendation.selection import recommend
+from recommendation.profiles import list_profiles, load_profile
 
 ROOT = Path(__file__).resolve().parents[1]
 HOST_NAME = "hu.interfood.menu_helper"
@@ -53,15 +54,20 @@ def write_message(stream, message):
 
 def handle_request(request, today=None):
     try:
+        if isinstance(request, dict) and request.get("type") == "profiles":
+            return {"ok": True, "profiles": list_profiles()}
         if not isinstance(request, dict) or request.get("type") != "plan":
             raise ValueError("Ismeretlen művelet.")
+        profile_id = request.get("profile_id")
+        if not isinstance(profile_id, str):
+            raise ValueError("Select a person explicitly.")
+        profile = load_profile(profile_id)
         if not isinstance(request.get("payload"), dict):
             raise ValueError("Invalid menu payload.")
         monday = next_monday(today or datetime.now(ZoneInfo("Europe/Budapest")).date())
         meals = normalize_menu(request["payload"], monday)
         menu = {"schema_version": 1, "week_start": monday.isoformat(),
                 "week_end": (monday + timedelta(days=6)).isoformat(), "meals": meals}
-        profile = json.loads((ROOT / "recommendation/profile.json").read_text(encoding="utf-8"))
         items = []
         for day in recommend(menu, profile):
             for option in [day] + day["alternatives"]:
@@ -72,7 +78,7 @@ def handle_request(request, today=None):
                     raise ValueError("Hibás ételazonosító.")
                 items.append({key: meal[key] for key in ("id", "date", "code", "name")})
                 items[-1]["quantity"] = 1
-        return {"ok": True, "plan": {"version": 1, "week_start": menu["week_start"],
+        return {"ok": True, "plan": {"version": 1, "profile_id": profile_id, "week_start": menu["week_start"],
                                     "week_end": menu["week_end"], "items": items}}
     except (OSError, KeyError, ValueError, TypeError, AttributeError):
         return {"ok": False, "error": "A betöltött étlapból nem készült érvényes következő heti kosárterv."}

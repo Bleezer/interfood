@@ -21,14 +21,14 @@ def payload(day="2026-11-09"):
 
 class CartHostTests(unittest.TestCase):
     def test_plan_uses_existing_rules_and_one_of_each(self):
-        response = handle_request({"type": "plan", "payload": payload()}, date(2026, 11, 5))
+        response = handle_request({"type": "plan", "profile_id": "self", "payload": payload()}, date(2026, 11, 5))
         self.assertTrue(response["ok"])
         self.assertEqual(response["plan"]["week_start"], "2026-11-09")
         self.assertEqual([(x["id"], x["quantity"]) for x in response["plan"]["items"]], [(1, 1)])
 
     def test_stale_week_and_unknown_commands_rejected(self):
-        for request in [{"type": "plan", "payload": payload("2026-11-02")},
-                        {"type": "checkout"}, {"type": "plan", "payload": {"data": {}}}]:
+        for request in [{"type": "plan", "profile_id": "self", "payload": payload("2026-11-02")},
+                        {"type": "checkout"}, {"type": "plan", "profile_id": "self", "payload": {"data": {}}}]:
             with self.subTest(request=request):
                 self.assertFalse(handle_request(request, date(2026, 11, 5))["ok"])
 
@@ -48,4 +48,4 @@ class CartHostTests(unittest.TestCase):
     def test_invalid_payload_types_return_error_without_crashing(self):
         for value in [None, [], "menu", 123]:
             with self.subTest(value=value):
-                self.assertFalse(handle_request({"type": "plan", "payload": value}, date(2026, 11, 5))["ok"])
+                self.assertFalse(handle_request({"type": "plan", "profile_id": "self", "payload": value}, date(2026, 11, 5))["ok"])

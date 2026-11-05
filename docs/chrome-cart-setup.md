@@ -1,63 +1,77 @@
-# Chrome kosársegéd telepítése
+# Chrome kosársegéd
 
-Ez a rész a felhasználó külön kérésére módosíthatja a kosarat:
-a következő hét napi fő ajánlatát és két különböző alternatíváját egy-egy
-adaggal beteszi. Nem véglegesít rendelést és nem fizet.
-A felhős heti Telegram-küldés továbbra is önállóan működik.
+A segéd kizárólag **gombnyomásra** tölti a kosarat. Belépéskor és profilváltáskor
+sem tesz be ételt. A sarokban személyválasztó és **Kosárba teszem** gomb van.
+Egy személy egy hétre egyszer indíthat feltöltést, a közös Interfood-fiókon belül.
 
-## Egyszeri telepítés
+## Frissítés a korábbi verzióról
 
-1. A projekt gyökeréből futtasd:
+Chrome → `chrome://extensions` → Interfood kosársegéd → **Frissítés** (környíl).
+Utána frissítsd az Interfood-lapot. A meglévő helyi kapcsolat újratelepítése
+nem szükséges, mert a bővítmény azonosítója és a host útvonala ugyanaz.
+A környilas frissítés megőrzi a korábbi heti nyilvántartást.
+
+A korábbi automatikus feltöltés a saját profilhoz számít.
+Az új gomb arra a hétre már csak jelzi, hogy volt feltöltés.
+
+## Első telepítés
 
 ```powershell
 .\.venv\Scripts\python.exe -X utf8 -m cart_assistant.install
 ```
 
-Ez a saját Windows-felhasználód Chrome NativeMessagingHosts bejegyzését állítja
-be. Nem kell rendszergazdai jog. A helyi launcher a projekt .venv Pythonját
-használja, a .local/ mappába kerül, és nem kerül Gitbe.
+A telepítő saját felhasználói HKCU-regisztrációt készít; nem kell adminjog.
+Chrome-ban `chrome://extensions` → Fejlesztői mód → Kicsomagolt bővítmény betöltése.
+Mappa: `C:\private\interfood\extension`. A projekt mappája maradjon meg.
 
-2. Chrome-ban nyisd meg: `chrome://extensions`.
-3. Jobb felül kapcsold be a **Fejlesztői módot**.
-4. Válaszd a **Kicsomagolt bővítmény betöltése** lehetőséget.
-5. Válaszd ki ezt a mappát: `C:\private\interfood\extension`.
+## Használat
 
-Ha a bővítményt a telepítő előtt töltötted be, az Interfood-lapot frissítsd.
-A bővítménynek a projekt mappájában kell maradnia. A manifest key rögzíti
-az azonosítóját, ezért frissítés után is ugyanahhoz a hosthoz kapcsolódik.
+1. Nyisd meg az Interfood étlapját, és jelentkezz be.
+2. A jobb alsó sarokban válaszd ki, kinek kérsz ebédet.
+3. Nyomd meg a **Kosárba teszem** gombot.
+4. A kiválasztott személy napi fő ajánlata és két alternatívája kerül a kosárba.
+5. Vedd ki, ami nem kell, majd te véglegesítsd a rendelést.
 
-## Első bejelentkezett próba
+Második gombnyomásnál ugyanarra a személyre és hétre jelzi, hogy a feltöltés
+már megtörtént. Üres kosárral, rendelés után, másnap és új étlapjelöltekkel sem
+tölti fel újra ugyanazt a személyt. Megszakadt/bizonytalan futás sem indul újra;
+a maradékot kézzel ellenőrizd.
 
-Nyisd meg a https://rendel.interfood.hu/ étlapot, és jelentkezz be.
-A bővítmény kiválasztja a következő hetet, majd a kínált napokon végiglép.
-A jobb alsó sarokban látszik, hány tétel került a kosárba, és miért állt le,
-ha valamelyik étel közben már nem rendelhető.
+Ha másik családtagnak ugyanaz az étel kell, egy új adag kerül be.
+A korábbi személy által kézzel kivett adagot nem állítja vissza.
+Az első személyhez egy már kézzel betett adag elfogadható; a meglévő más
+tételeket és adagszámokat nem csökkenti.
 
-A kosárban minden ajánlatból legfeljebb egy új adag lesz.
-A már bent lévő tétel mennyiségét nem növeli, más tételeket nem töröl.
-A feltöltés után vedd ki, ami nem kell, majd te véglegesítsd a rendelést.
+A bővítmény ikonjánál a **Kosársegéd bekapcsolva** kapcsolóval kikapcsolható.
+A helyi adatok törlése vagy a bővítmény eltávolítása törli a heti emlékezetet.
+Másik fülön történt fiókváltás megszakítja a futást; frissítsd az aktív lapot.
 
-A bővítmény az éppen betöltött étlapból, a helyi recommendation/profile.json
-szabályaival számol újra. Azonos adatok mellett ez megegyezik a Telegram
-ajánlataival. Későbbi menü- vagy profilváltozás eltérő jelölteket adhat.
+## Családi profilok
 
-## Duplázás és megszakítás
+`recommendation/profiles.json` tartalmazza a személyek listáját:
 
-Fiók, hét és ételazonosító szerint megjegyzi, mit kezelt már.
-A kézzel kivett ételt nem teszi vissza oldalfrissítéskor vagy új belépéskor.
-Bizonytalan kattintási eredménynél megáll, és a tételt automatikusan nem próbálja újra.
-Ezt a tételt kézzel ellenőrizd; a többi tételt is kézzel befejezheted.
+- `self` — Én: a meglévő `profile.json` szabályai.
+- `wife` — Feleségem: még nincs konfigurálva.
+- `son` — Fiam: még nincs konfigurálva.
 
-A másik Interfood-fülön történt belépés/kilépés vagy fiókváltás megszakítja a
-korábbi fül automatizmusát; ilyenkor frissítsd a használni kívánt lapot.
-Több fül ugyanazt a tételt nem foglalhatja le egyszerre.
+A nem konfigurált profil a legördülőben látszik, de nem választható.
+A saját preferenciák meghatározása után külön JSON-fájlt kell rendelni a
+személy `file` mezőjéhez. Nincs automatikus másolás vagy fallback a saját profilra.
 
-A bővítmény ikonjánál az **Automatikus kosárfeltöltés** kapcsolóval bármikor
-kikapcsolhatod. A már betett ételeket a kikapcsolás nem veszi ki.
+Példa: `{"id":"wife","name":"Feleségem","file":"profiles/wife.json"}`.
+A profilfájl a recommendation/ könyvtáron belül legyen, a jelenlegi profile.json
+sémájában. A tényleges értékeket az adott személy igényei alapján kell megadni.
+A fehérje/zsírhatárok, sorpreferenciák és szombati lazítás mellett az
+exclude_seafood, exclude_fruity_meat és prefer_breaded_saturday logikai
+mezőkkel a kizárások és a rántott hús előnye is személyenként állítható.
+A saját profilban mindhárom true, a korábbi szabályok szerint.
 
-A bővítmény eltávolítása vagy helyi adatainak törlése a korábbi feltöltési
-emlékezetet is törli. Ilyenkor a még kosárban lévő tételeket kihagyja,
-de a korábban kézzel kivett ételekre már nem emlékszik.
+CLI: `python -m recommendation --person self`; a régi `--profile útvonal` is működik.
+A Telegram heti workflow egyelőre a korábbi saját profile.json-t használja;
+ez a módosítás nem küld új címzettnek és nem állít elő automatikus családi riportot.
+
+A kosárterv az éppen betöltött étlapból számol újra; ha a forrás változott,
+eltérhet a korábban elküldött Telegram-jelöltektől.
 
 ## Fejlesztői ellenőrzés
 
@@ -67,16 +81,15 @@ node --test extension/tests/*.test.cjs
 .\.venv\Scripts\python.exe -X utf8 scripts/check_cart_dom.py
 ```
 
-Az utolsó parancs minden URL-t helyi HTML-re cserél; nem küld valódi kosárkérést.
-Az első valódi kosárfeltöltést a telepített Chrome-bővítménnyel kell ellenőrizni.
+A DOM-próba minden URL-t helyi HTML-re cserél; nincs valódi kosárkérés.
+A felhasználói Chrome-ban az első valódi próba külön ellenőrzés.
+Rendelést és fizetést a segéd nem véglegesít.
 
 ## Eltávolítás
 
 Chrome → Bővítmények → Interfood kosársegéd → Eltávolítás.
-A helyi host külön eltávolítása PowerShellből:
+A host regisztrációja külön törölhető PowerShellből:
 
 ```powershell
 Remove-Item -LiteralPath 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\hu.interfood.menu_helper'
 ```
-
-Ez csak a host regisztrációját törli, a projektet és étlapadatokat nem.
