@@ -127,3 +127,14 @@ Ezeket ne commitold. Helyi előnézet értesítés nélkül:
 ```powershell
 .\.venv\Scripts\python.exe -X utf8 -m delivery --dry-run
 ```
+
+## Chrome kosársegéd
+
+Az `extension/` Chrome-bővítmény bejelentkezés után a következő hét napi fő
+ajánlatát és két alternatíváját egy-egy adaggal a kosárba teszi.
+A `cart_assistant/` helyi Python-host az oldalon betöltött étlapból számít
+tervet a meglévő szabályokkal; hitelesítési adatot nem kap.
+A kosárban már szereplő ételt nem növeli, a kézzel kivett ételt nem teszi vissza.
+
+A rendelést a felhasználó véglegesíti. Telepítés:
+[docs/chrome-cart-setup.md](docs/chrome-cart-setup.md).

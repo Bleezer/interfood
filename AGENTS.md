@@ -32,7 +32,7 @@ A projekt gyökeréből, PowerShellben:
 
 ```powershell
 .\.venv\Scripts\python.exe -X utf8 -m unittest -v
-.\.venv\Scripts\python.exe -m compileall -q interfood recommendation delivery tests collect_menu.py
+.\.venv\Scripts\python.exe -m compileall -q interfood recommendation delivery cart_assistant tests scripts collect_menu.py
 ```
 
 Gyűjtés: `.\.venv\Scripts\python.exe -X utf8 -m interfood`.
@@ -53,3 +53,17 @@ Superpowers tervek: `docs/superpowers/plans/`; specifikációk: `docs/superpower
 - `recommendation/report.py`: a CLI és a Telegram közös szöveges riportja.
 - Token és chat-azonosító kizárólag Actions Secrets-be kerülhet, kódba vagy naplóba nem.
 - Az offline tesztek a HTTP-hívásokat helyettesítik; valódi értesítést nem küldhetnek.
+
+## Chrome kosársegéd
+
+A felhasználó külön engedélyezte, hogy bejelentkezés után a napi fő ajánlat
+és két alternatíva mindegyikéből egy adag a kosárba kerüljön.
+
+- `extension/`: kizárólag a Chrome-ban megnyitott Interfood-oldal saját kosárhoz adó gombjait használja.
+- `cart_assistant/`: a nyilvános étlapséma alapján számít tervet; nem jelentkezik be és nem küld kosárkérést.
+- A gyűjtőre vonatkozó kosármódosítási tilalom továbbra is érvényes.
+- Nincs automatikus rendelés, fizetés, kosárürítés vagy mennyiségcsökkentés.
+- Meglévő kosártételek mennyiségét ne növeljük; a kézzel kivett ajánlatot ne tegyük vissza.
+- A tartós pending/done/uncertain állapotokat fiók/hét/étel szerint őrizzük meg.
+- Jelszó, token és teljes személyes profil nem kerülhet a bővítmény üzeneteibe vagy naplóiba.
+- A DOM-próba minden hálózati URL-t helyi HTML-re cserél; valódi kosárkérést nem küldhet.

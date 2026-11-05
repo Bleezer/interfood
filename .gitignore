@@ -8,3 +8,5 @@ data/**/*.tmp
 # Helyi végrehajtási munkafájlok
 .superpowers/
 data/
+
+.local/
