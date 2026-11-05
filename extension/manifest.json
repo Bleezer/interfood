@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Interfood kosársegéd",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Szemelyenkenti, gombnyomasra indulo heti kosarfeltoltes; rendelest nem veglegesit.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqIsRmSHL/tUJ/lL4sAZJwrrqVWXZ/5tHYUBX3JmiPT6H6vYtAEw5J6hsh3O7Dt0t82MWdf1KWNYDbScbi0jTGT0Yy/DjZEpkzAP9Sew9ask34wCGLdZZ6/7yOddjK7Y25Lg3Trudktg3Vg7Dqxltm7TnO8i8nJ4kkc9/p1qEZCV/ejVol62L5jVWHlGMwqXPF2keYcN7PpvvBRwKJcg9vFQE/JMxOVqjY5QeMypPhHlBsM51xf9FdGE5GPgmM1rW3faKjmsYwrB81LQQOr7QDhKv1XEljFmQuyH2BnSZB332nu+s4X2gx9mbHmFX0ckyvlWRT+aExqepAwEzF+nNqwIDAQAB",
   "permissions": [

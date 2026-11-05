@@ -10,12 +10,12 @@ content = (ROOT / "extension/content.js").read_text(encoding="utf-8")
 
 stub = """
 window.__adds=0;window.__planCalls=0;window.__claimedAny=false;
-window.__lastStatus="";window.__changeListeners=[];
+window.__lastStatus="";window.__changeListeners=[];window.__contentListeners=[];
 window.importScripts=()=>{};
 window.chrome={
  runtime:{
   id:"a".repeat(32),
-  onMessage:{addListener:fn=>{window.__worker=fn;}},
+  onMessage:{addListener:fn=>{if(!window.__worker)window.__worker=fn;else window.__contentListeners.push(fn);}},
   sendNativeMessage:async(host,request)=>{
     if(request.type==="profiles") return {ok:true,profiles:[
       {id:"self",name:"Én",configured:true},
@@ -37,12 +37,21 @@ window.chrome={
     return response;
   }
  },
+ tabs:{sendMessage:async(tabId,message)=>new Promise(resolve=>{
+   if(!window.__contentListeners.length)resolve(null);
+   else window.__contentListeners.forEach(fn=>fn(message,{id:window.chrome.runtime.id},resolve));
+ })},
  storage:{
   local:{
    get:async keys=>{
     const state=JSON.parse(localStorage.getItem("extension-store")||"{}");
-    return Object.fromEntries((Array.isArray(keys)?keys:[keys])
+    return Object.fromEntries((keys===null?Object.keys(state):Array.isArray(keys)?keys:[keys])
       .filter(key=>Object.hasOwn(state,key)).map(key=>[key,state[key]]));
+   },
+   remove:async keys=>{
+    const state=JSON.parse(localStorage.getItem("extension-store")||"{}");
+    for(const key of keys)delete state[key];
+    localStorage.setItem("extension-store",JSON.stringify(state));
    },
    set:async values=>{
     const state=JSON.parse(localStorage.getItem("extension-store")||"{}"), changes={};
@@ -136,6 +145,21 @@ with sync_playwright() as p:
         page.locator("#interfood-cart-start").click()
         page.wait_for_function('window.__lastStatus.includes("már megtörtént")')
         assert page.evaluate("window.__adds") == 4
+        assert page.locator("#interfood-cart-reset").count() == 1, "Weekly reset option is missing"
+        page.once("dialog", lambda dialog: dialog.dismiss())
+        page.locator("#interfood-cart-reset").click()
+        assert page.evaluate("window.__adds") == 4
+        page.once("dialog", lambda dialog: dialog.accept())
+        page.locator("#interfood-cart-reset").click()
+        page.wait_for_function('window.__lastStatus.includes("törölve")')
+        assert (amount(page,1),amount(page,2)) == ("2","3"), "Reset changed basket contents"
+        assert page.evaluate("window.__adds") == 4, "Reset started filling"
+        page.evaluate('document.querySelectorAll(".food-middle-right-quantity").forEach(element=>element.textContent="0")')
+        page.locator("#interfood-cart-person").select_option("self")
+        ready(page)
+        page.locator("#interfood-cart-start").click();done(page)
+        assert (amount(page,1),amount(page,2)) == ("1","1"), "Reset did not allow a fresh manual fill"
+        assert page.evaluate("window.__adds") == 6
         page.evaluate('chrome.storage.local.set({enabled:false})')
         page.wait_for_timeout(500)
         assert page.locator("#interfood-cart-start").is_disabled(), "Disabled helper button is enabled"
@@ -147,7 +171,7 @@ with sync_playwright() as p:
         page.locator("#interfood-cart-start").click()
         page.wait_for_function('window.__lastStatus.includes("megszak")',timeout=15000)
         assert page.evaluate("window.__adds") == 0, "Logout during async validation still clicked"
-        print("Offline DOM passed: manual only, per-person weekly lock, three family portions, no restoration, logout protection.")
+        print("Offline DOM passed: manual only, per-person weekly lock, three family portions, no restoration, logout protection, scoped weekly reset and refill.")
     except Exception:
         print("DOM diagnostics:",page.evaluate("({status:window.__lastStatus,adds:window.__adds,body:document.body.innerText})"))
         raise

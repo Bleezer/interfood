@@ -27,7 +27,10 @@ async function handle(message, sender) {
   }
   if (message.type === "settings") {
     const settings = await chrome.storage.local.get(["enabled", "observedAccount", "selectedProfileId"]);
-    return {ok: true, enabled: settings.enabled !== false,
+    const identity = settings.observedAccount;
+    const resetKey = "cart-reset:" + identity + ":" + InterfoodCartCore.nextWeek().start;
+    const resetEpoch = identity ? (await chrome.storage.local.get(resetKey))[resetKey] || 0 : 0;
+    return {ok: true, resetEpoch, enabled: settings.enabled !== false,
       accountId: settings.observedAccount ?? null, profileId: settings.selectedProfileId || "self"};
   }
   if (message.type === "status") {
@@ -38,17 +41,43 @@ async function handle(message, sender) {
   if (message.type === "profiles") return native({type: "profiles"});
 
   const account = String(message.accountId), profile = message.profileId;
-  if (typeof profile !== "string" || !/^[a-z][a-z0-9_-]{0,31}$/.test(profile))
-    throw Error("Válassz személyt a kosárfeltöltéshez.");
   const week = InterfoodCartCore.nextWeek();
   const oldKey = InterfoodCartCore.ledgerKey(account, week.start);
+  if ((await chrome.storage.local.get("observedAccount")).observedAccount !== account)
+    throw Error("A bejelentkezett fiók másik fülön megváltozott; frissítsd az oldalt.");
+  if (message.weekStart !== week.start) throw Error("A hét közben megváltozott; frissítsd az oldalt.");
+  const resetKey = "cart-reset:" + account + ":" + week.start;
+  const resetEpoch = (await chrome.storage.local.get(resetKey))[resetKey] || 0;
+  if (message.type === "reset-week") {
+    const stored = await chrome.storage.local.get(null);
+    const runPrefix = "cart-run:" + account + ":" + week.start + ":";
+    const owners = [...new Set(Object.entries(stored)
+      .filter(([key, value]) => key.startsWith(runPrefix) && value?.status === "running" && Number.isInteger(value.tabId))
+      .map(([, value]) => value.tabId))];
+    for (const tabId of owners) {
+      let activity;
+      try { activity = await chrome.tabs.sendMessage(tabId, {type: "cart-activity"}, {frameId: 0}); }
+      catch { activity = null; }
+      if (activity?.busy) throw Error("Még folyamatban van kosárfeltöltés. Előbb várd meg vagy állítsd le.");
+    }
+    const planPrefix = "plan:" + account + ":" + week.start + ":";
+    const shared = "cart-contributors:" + account + ":" + week.start;
+    const keys = Object.keys(stored).filter(key =>
+      key === oldKey || key.startsWith(oldKey + ":") || key.startsWith(runPrefix) ||
+      key.startsWith(planPrefix) || key === shared);
+    await chrome.storage.local.set({[resetKey]: resetEpoch + 1});
+    await chrome.storage.local.remove(keys);
+    return {ok: true, resetEpoch: resetEpoch + 1};
+  }
+  if (message.type !== "run-status" && (message.resetEpoch ?? 0) !== resetEpoch)
+    throw Error("A heti előzményeket közben törölték; indíts új feltöltést.");
+  if (typeof profile !== "string" || !/^[a-z][a-z0-9_-]{0,31}$/.test(profile))
+    throw Error("Válassz személyt a kosárfeltöltéshez.");
   const key = InterfoodCartCore.ledgerKey(account, week.start, profile);
   const runKey = "cart-run:" + account + ":" + week.start + ":" + profile;
   const sharedKey = "cart-contributors:" + account + ":" + week.start;
   const planKey = "plan:" + account + ":" + week.start + ":" + profile;
-  if ((await chrome.storage.local.get("observedAccount")).observedAccount !== account)
-    throw Error("A bejelentkezett fiók másik fülön megváltozott; frissítsd az oldalt.");
-  if (message.weekStart !== week.start) throw Error("A hét közben megváltozott; frissítsd az oldalt.");
+
 
   // A régi automatikus kosár a saját profilé; az átállás nem töltheti újra.
   const selfKey = InterfoodCartCore.ledgerKey(account, week.start, "self");
@@ -61,7 +90,7 @@ async function handle(message, sender) {
     await chrome.storage.local.set({[selfKey]: legacy, [selfRunKey]: {status, legacy: true}, [sharedKey]: contributors});
     state = {...state, [selfKey]: legacy, [selfRunKey]: {status, legacy: true}, [sharedKey]: contributors};
   }
-  if (message.type === "run-status") return {ok: true, status: state[runKey]?.status || "new"};
+  if (message.type === "run-status") return {ok: true, status: state[runKey]?.status || "new", resetEpoch};
   if (message.type === "plan") {
     if (state.enabled === false) throw Error("A kosársegéd ki van kapcsolva.");
     const response = await native({type: "plan", payload: message.payload, profile_id: profile});

@@ -34,7 +34,7 @@ Mappa: `C:\private\interfood\extension`. A projekt mappája maradjon meg.
 
 Második gombnyomásnál ugyanarra a személyre és hétre jelzi, hogy a feltöltés
 már megtörtént. Üres kosárral, rendelés után, másnap és új étlapjelöltekkel sem
-tölti fel újra ugyanazt a személyt. Megszakadt/bizonytalan futás sem indul újra;
+tölti fel újra ugyanazt a személyt, amíg a heti előzményeket nem törlöd. Megszakadt/bizonytalan futás sem indul újra;
 a maradékot kézzel ellenőrizd.
 
 Ha másik családtagnak ugyanaz az étel kell, egy új adag kerül be.
@@ -93,3 +93,18 @@ A host regisztrációja külön törölhető PowerShellből:
 ```powershell
 Remove-Item -LiteralPath 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\hu.interfood.menu_helper'
 ```
+
+## Heti feltöltési előzmények törlése
+
+A panel **Heti előzmények törlése** gombja megerősítés után a bejelentkezett
+Interfood-fiók következő hetére minden családtag feltöltési nyilvántartását
+törli. A megerősítésben megjelenik a célhét kezdete. A régi automatikus
+feltöltés nyilvántartása is törlődik, így nem állítja vissza az ismétlés tiltását.
+
+Ez kizárólag helyi feltöltési előzmény: nem ellenőrzi, hogy leadtál-e rendelést.
+A kosár tartalma megmarad, étel nem kerül be automatikusan a törlés után.
+Új feltöltéshez ismét válassz személyt és nyomd meg a **Kosárba teszem** gombot.
+
+Más hetek és más Interfood-fiókok adatai, a profilok és a beállítások megmaradnak.
+Folyamatban lévő feltöltésnél előbb várd meg annak végét vagy állítsd le.
+Elakadt, már nem futó művelet előzménye törölhető.

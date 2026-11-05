@@ -4,6 +4,7 @@
   const core = globalThis.InterfoodCartCore;
   let accountId = null, payload = null, busy = false, generation = 0, timer = null;
   let profiles = null, selectedProfile = "self", lastHint = null, helperEnabled = true;
+  let filling = false, operationEpoch = null;
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   const visible = element => !!element && element.getClientRects().length > 0;
   async function call(message) {
@@ -41,6 +42,17 @@
       start.disabled = true;
       start.addEventListener("click", () => run().catch(error => show("Kosársegéd: " + error.message)));
       box.append(start);
+      const reset = document.createElement("button");
+      reset.id = "interfood-cart-reset";
+      reset.type = "button";
+      reset.textContent = "Heti előzmények törlése";
+      reset.style.cssText = "display:block;margin-top:10px";
+      reset.addEventListener("click", () => resetHistory().catch(error => show("Kosársegéd: " + error.message)));
+      box.append(reset);
+      const explanation = document.createElement("small");
+      explanation.textContent = "Minden családtag következő heti feltöltési előzménye. A kosár tartalma megmarad.";
+      explanation.style.cssText = "display:block;margin-top:4px";
+      box.append(explanation);
       document.body.append(box);
     }
     const select = box.querySelector("#interfood-cart-person");
@@ -66,6 +78,9 @@
     select.disabled = busy || !profiles;
     box.querySelector("#interfood-cart-start").disabled = busy || !helperEnabled || !accountId ||
       !profiles?.some(profile => profile.id === selectedProfile && profile.configured);
+    const reset = box.querySelector("#interfood-cart-reset");
+    reset.disabled = busy || !accountId;
+    reset.title = core.nextWeek().start + " — minden családtag feltöltési előzménye";
     return box;
   }
   function show(message) {
@@ -98,7 +113,8 @@
   async function active(account, version, profile) {
     const settings = await call({type: "settings"});
     if (accountId !== account || version !== generation || selectedProfile !== profile ||
-        settings.accountId !== account || !settings.enabled)
+        settings.accountId !== account || !settings.enabled ||
+        (operationEpoch !== null && settings.resetEpoch !== operationEpoch))
       throw Error("A kosárfeltöltés megszakítva.");
   }
   async function waitFor(getter, account, version, profile, timeout = 10000) {
@@ -140,7 +156,7 @@
   }
   async function fill(plan, account, version, profile) {
     let added = 0, skipped = 0;
-    const operation = {accountId: account, weekStart: plan.week_start, profileId: profile};
+    const operation = {accountId: account, weekStart: plan.week_start, profileId: profile, resetEpoch: operationEpoch};
     for (const item of plan.items) {
       await active(account, version, profile);
       const day = [...document.querySelectorAll("[data-date]")].find(element =>
@@ -183,9 +199,25 @@
     show(status === "done" ? "Ennek a személynek erre a hétre már megtörtént a kosárfeltöltés."
       : "Ennek a személynek erre a hétre már indult feltöltés. A bizonytalan eredményt ellenőrizd kézzel; nem teszek be újra.");
   }
+  async function resetHistory() {
+    if (busy || !accountId) return;
+    const account = accountId, week = core.nextWeek();
+    if (!window.confirm("Törlöd a " + week.start + "-i hét feltöltési előzményeit minden családtagnál? A kosár tartalma megmarad.")) return;
+    busy = true;
+    panel();
+    try {
+      await call({type: "reset-week", accountId: account, weekStart: week.start});
+      lastHint = [helperEnabled, accountId, selectedProfile, !!profiles].join(":");
+      show("Heti feltöltési előzmények törölve minden családtagnál. A kosár megmaradt; gombnyomással újra tölthetsz.");
+    } finally {
+      busy = false;
+      panel();
+    }
+  }
   async function run() {
     if (busy || !accountId || !profiles?.some(p => p.id === selectedProfile && p.configured)) return;
     busy = true;
+    filling = true;
     panel();
     const week = core.nextWeek(), account = accountId, version = generation, profile = selectedProfile;
     const operation = {accountId: account, weekStart: week.start, profileId: profile};
@@ -193,6 +225,8 @@
     try {
       await active(account, version, profile);
       const previous = await call({type: "run-status", ...operation});
+      operationEpoch = previous.resetEpoch;
+      operation.resetEpoch = previous.resetEpoch;
       if (previous.status !== "new") { already(previous.status); return; }
       show("Kosársegéd: a kiválasztott személy következő heti étlapjának ellenőrzése…");
       await selectWeek(week, account, version, profile);
@@ -214,9 +248,14 @@
       throw error;
     } finally {
       busy = false;
+      filling = false;
+      operationEpoch = null;
       panel();
     }
   }
+  chrome.runtime.onMessage.addListener((message, sender, reply) => {
+    if (sender.id === chrome.runtime.id && message?.type === "cart-activity") reply({busy: filling});
+  });
   window.addEventListener("message", event => {
     if (event.source !== window || event.origin !== location.origin || event.data?.source !== "interfood-cart-bridge") return;
     if (event.data.type === "account") {
@@ -230,6 +269,14 @@
   });
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
+    const resetKey = "cart-reset:" + accountId + ":" + core.nextWeek().start;
+    if (changes[resetKey]) {
+      generation++;
+      if (!busy) {
+        lastHint = [helperEnabled, accountId, selectedProfile, !!profiles].join(":");
+        show("A heti felt\u00f6lt\u00e9si el\u0151zm\u00e9nyek t\u00f6r\u00f6lve. \u00daj k\u00e9zi felt\u00f6lt\u00e9s ind\u00edthat\u00f3.");
+      }
+    }
     if (changes.enabled) helperEnabled = changes.enabled.newValue !== false;
     if (changes.observedAccount || changes.authEpoch || changes.enabled ||
         (changes.selectedProfileId && changes.selectedProfileId.newValue !== selectedProfile)) {

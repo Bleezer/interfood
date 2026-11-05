@@ -74,3 +74,6 @@ személyenként a napi fő ajánlat és két alternatíva egy-egy adagja a kosá
 - A recommendation/profiles.json listázza a self/wife/son profilokat; hiányzó preferenciával nincs indítás.
 - Fiók/hét/személy szerint egyszer indulhat feltöltés; a korábbi automatikus kosár a saját profilé.
 - Közös fogásnál minden további családtag egy új adagot kap; a korábban kivett adagokat nem állítjuk vissza.
+
+- Külön heti előzménytörlés csak a bejelentkezett fiók következő hetére, minden profilra végezhető.
+- Az előzménytörlés a kosarat nem módosítja; más hetek, fiókok és beállítások megmaradnak, aktív feltöltésnél tiltott.
